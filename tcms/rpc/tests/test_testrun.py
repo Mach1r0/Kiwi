@@ -7,7 +7,7 @@ from attachments.models import Attachment
 from django.contrib.auth.models import Permission
 from django.utils.translation import gettext_lazy as _
 from tcms_api import xmlrpc
-
+from tcms.testplans.models import TestCasePlan  
 from tcms.rpc.tests.utils import APIPermissionsTestCase, APITestCase
 from tcms.testcases.models import TestCaseStatus
 from tcms.testruns.models import TestExecution, TestRun
@@ -63,8 +63,8 @@ class TestAddCase(APITestCase):
             self.assertIsInstance(result["properties"], list)
 
     def test_add_case_to_empty_plan(self):
-        plan = self.factory.plan()
-        case = self.factory.case(category=plan.product.category)
+        plan = TestPlanFactory()  
+        case = TestCaseFactory(category=plan.product.category.first())  
         self.assertEqual(plan.testcaseplan_set.count(), 0)
 
         test_case_plan = plan.add_case(case)
@@ -73,15 +73,15 @@ class TestAddCase(APITestCase):
         self.assertEqual(plan.testcaseplan_set.count(), 1)
 
     def test_add_case_to_plan_with_case_having_null_sortkey(self):
-        plan = self.factory.plan()
-        case1 = self.factory.case(category=plan.product.category)
+        plan = TestPlanFactory()  
+        case1 = TestCaseFactory(category=plan.product.category.first())  
 
         TestCasePlan.objects.create(plan=plan, case=case1, sortkey=None)
 
         self.assertEqual(plan.testcaseplan_set.count(), 1)
         self.assertIsNone(plan.testcaseplan_set.first().sortkey)
 
-        case2 = self.factory.case(category=plan.product.category)
+        case2 = TestCaseFactory(category=plan.product.category.first())  
         test_case_plan_2 = plan.add_case(case2)
 
         self.assertEqual(test_case_plan_2.sortkey, 0)
