@@ -62,6 +62,30 @@ class TestAddCase(APITestCase):
             self.assertIn("properties", result)
             self.assertIsInstance(result["properties"], list)
 
+    def test_add_case_to_empty_plan(self):
+        plan = self.factory.plan()
+        case = self.factory.case(category=plan.product.category)
+        self.assertEqual(plan.testcaseplan_set.count(), 0)
+
+        test_case_plan = plan.add_case(case)
+
+        self.assertEqual(test_case_plan.sortkey, 0)
+        self.assertEqual(plan.testcaseplan_set.count(), 1)
+
+    def test_add_case_to_plan_with_case_having_null_sortkey(self):
+        plan = self.factory.plan()
+        case1 = self.factory.case(category=plan.product.category)
+
+        TestCasePlan.objects.create(plan=plan, case=case1, sortkey=None)
+
+        self.assertEqual(plan.testcaseplan_set.count(), 1)
+        self.assertIsNone(plan.testcaseplan_set.first().sortkey)
+
+        case2 = self.factory.case(category=plan.product.category)
+        test_case_plan_2 = plan.add_case(case2)
+
+        self.assertEqual(test_case_plan_2.sortkey, 0)
+
     def test_add_case_without_permissions(self):
         unauthorized_user = UserFactory()
         unauthorized_user.set_password("api-testing")
